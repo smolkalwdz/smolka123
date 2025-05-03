@@ -1,61 +1,63 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Интерактивная Канбан-Доска</title>
+  <title>Канбан-доска броней</title>
   <style>
-    body { font-family: sans-serif; background: #f0f0f0; margin: 0; padding: 20px; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+    }
     .board {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 10px;
     }
     .cell {
       background: #fff;
-      border: 1px solid #ccc;
-      padding: 10px;
-      min-height: 120px;
-      position: relative;
-      overflow-y: auto;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
-    .cell h4 {
-      margin: 0 0 10px 0;
-      font-size: 14px;
+    .cell-header, .cell-footer {
+      background: #333;
+      color: #fff;
+      text-align: center;
+      padding: 6px 0;
+      flex-shrink: 0;
+    }
+    .cell-body {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
     }
     .card {
       background: #ffeeba;
-      border-left: 5px solid red;
+      border-left: 6px solid #d39e00;
+      margin-bottom: 8px;
       padding: 8px;
-      margin-bottom: 6px;
+      border-radius: 4px;
       cursor: move;
     }
-    .card.green { border-left-color: green; background: #d4edda; }
-    .card.red { border-left-color: red; background: #f8d7da; }
     .controls {
-      margin-top: 20px;
+      margin-bottom: 20px;
     }
-    input, select, button {
-      margin-right: 5px;
-      padding: 5px;
-    }
-    label {
-      font-size: 12px;
-    }
-    .card .edit-button, .card .delete-button {
-      font-size: 12px;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-    }
-    .card .delete-button {
-      color: red;
+    .controls input,
+    .controls select,
+    .controls button {
+      padding: 6px;
+      margin-right: 6px;
     }
   </style>
 </head>
 <body>
 
-<h2>Интерактивная Канбан-Доска Броней</h2>
 <div class="controls">
   <input id="name" placeholder="Имя">
   <input id="phone" placeholder="Телефон">
@@ -64,97 +66,100 @@
     <option value="1">1</option>
     <option value="2">2</option>
     <option value="3">3</option>
-    <option value="4">4</option>
-    <option value="5">5</option>
-    <option value="6">6</option>
-    <option value="7">7</option>
-    <option value="8">8</option>
   </select>
-  <input id="time" type="time" placeholder="Время брони">
-  <input id="guests" type="number" placeholder="Количество человек">
-  <label><input id="hookah" type="checkbox"> Кальян</label>
-  <label><input id="vr" type="checkbox"> VR</label>
-  <button onclick="addCard()">Добавить бронь</button>
+  <input id="time" type="time">
+  <input id="guests" type="number" placeholder="Гостей">
+  <button onclick="addCard()">Добавить</button>
 </div>
 
-<div class="board" id="board">
-  <div class="cell" id="table-1"><h4>Стол 1</h4></div>
-  <div class="cell" id="table-2"><h4>Стол 2</h4></div>
-  <div class="cell" id="table-3"><h4>Стол 3</h4></div>
-  <div class="cell" id="table-4"><h4>Стол 4</h4></div>
-  <div class="cell" id="table-5"><h4>Стол 5</h4></div>
-  <div class="cell" id="table-6"><h4>Стол 6</h4></div>
-  <div class="cell" id="table-7"><h4>Стол 7</h4></div>
-  <div class="cell" id="table-8"><h4>Стол 8</h4></div>
+<div class="board">
+  <div class="cell" id="table-1" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <div class="cell-header">Стол 1</div>
+    <div class="cell-body"></div>
+    <div class="cell-footer">4 – 6 чел.</div>
+  </div>
+  <div class="cell" id="table-2" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <div class="cell-header">Стол 2</div>
+    <div class="cell-body"></div>
+    <div class="cell-footer">4 – 6 чел.</div>
+  </div>
+  <div class="cell" id="table-3" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <div class="cell-header">Стол 3</div>
+    <div class="cell-body"></div>
+    <div class="cell-footer">4 – 6 чел.</div>
+  </div>
 </div>
 
 <script>
-window.onload = function() {
-  setTimeout(loadDataFromLocalStorage, 500);
-};
+  let cardId = 0;
+  function allowDrop(ev) {
+    ev.preventDefault();
+  }
+  function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+  }
+  function drop(ev) {
+    ev.preventDefault();
+    const id = ev.dataTransfer.getData("text");
+    ev.currentTarget.querySelector('.cell-body').appendChild(document.getElementById(id));
+    saveState();
+  }
 
-let cardId = 0;
+  function addCard() {
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const table = document.getElementById('table').value;
+    const time = document.getElementById('time').value;
+    const guests = document.getElementById('guests').value;
+    if (!name||!phone||!table||!time||!guests) return;
 
-function drag(ev) {
-  ev.dataTransfer.setData("text", ev.target.id);
-}
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'card-' + (cardId++);
+    card.draggable = true;
+    card.ondragstart = drag;
+    card.innerHTML = `
+      <strong>${name}</strong><br>
+      ${time} • ${guests} чел.<br>
+      тел. ${phone}
+    `;
+    document.querySelector(`#table-${table} .cell-body`).appendChild(card);
+    saveState();
+  }
 
-function addCard() {
-  const name = document.getElementById('name').value;
-  const phone = document.getElementById('phone').value;
-  const table = document.getElementById('table').value;
-  const time = document.getElementById('time').value;
-  const guests = document.getElementById('guests').value;
-  const hookah = document.getElementById('hookah').checked ? 'Кальян' : '';
-  const vr = document.getElementById('vr').checked ? 'VR' : '';
-  if (!name || !phone || !table || !time || !guests) return;
-  const data = { name, phone, time, table, guests, hookah, vr };
-  const stored = JSON.parse(localStorage.getItem('bookings')||'[]');
-  stored.push(data);
-  localStorage.setItem('bookings', JSON.stringify(stored));
-  addCardToDOM(data);
-}
+  // --- LocalStorage ---
+  function saveState() {
+    const data = [];
+    document.querySelectorAll('.cell').forEach(cell => {
+      const table = cell.id.replace('table-','');
+      cell.querySelectorAll('.card').forEach(card => {
+        data.push({
+          table,
+          html: card.innerHTML,
+          id: card.id
+        });
+      });
+    });
+    localStorage.setItem('kanbanBookings', JSON.stringify(data));
+  }
 
-function loadDataFromLocalStorage() {
-  const stored = JSON.parse(localStorage.getItem('bookings')||'[]');
-  stored.forEach(addCardToDOM);
-}
+  function loadState() {
+    const data = JSON.parse(localStorage.getItem('kanbanBookings')||'[]');
+    data.forEach(item=>{
+      const cellBody = document.querySelector(`#table-${item.table} .cell-body`);
+      if (!cellBody) return;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.id = item.id;
+      card.draggable = true;
+      card.ondragstart = drag;
+      card.innerHTML = item.html;
+      cellBody.appendChild(card);
+    });
+  }
 
-function addCardToDOM(data) {
-  const card = document.createElement('div');
-  card.className='card red';
-  card.id='card'+cardId++;
-  card.draggable=true;
-  card.ondragstart=drag;
-  card.innerHTML=`
-    <strong>${data.name}</strong><br>
-    Тел: ${data.phone}<br>
-    Время: ${data.time}<br>
-    Гостей: ${data.guests}<br>
-    Стол: ${data.table}<br>
-    ${data.hookah?'Кальян<br>':''}
-    ${data.vr?'VR<br>':''}
-    <button onclick="editCard('${card.id}')">✏️</button>
-    <button onclick="deleteCard('${card.id}')">🗑️</button>
-  `;
-  const cell=document.getElementById('table-'+data.table);
-  if(cell) cell.appendChild(card);
-}
-
-function deleteCard(id){
-  const el=document.getElementById(id);
-  const name=el.querySelector('strong').innerText;
-  let stored=JSON.parse(localStorage.getItem('bookings')||'[]');
-  stored=stored.filter(d=>d.name!==name);
-  localStorage.setItem('bookings',JSON.stringify(stored));
-  el.remove();
-}
-
-function editCard(id){
-  const el=document.getElementById(id);
-  const name=prompt('Имя',el.querySelector('strong').innerText);
-  // можно доработать аналогично
-}
+  window.onload = loadState;
 </script>
+
 </body>
 </html>
